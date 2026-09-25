@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1A2744">
+<title>АДМИН 2.0 · Резонанс-Мед</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --navy:#1A2744;--blue:#2C4A8A;--blue-light:#4A6FBF;
+  --accent:#E8EEF7;--accent2:#B5D4F4;
+  --purple:#5B2480;--purple-light:#7B3FAF;--purple-accent:#F0E8F7;--purple-accent2:#C8A8E0;
+  --white:#FFFFFF;--bg:#F7F9FC;--card:#FFFFFF;
+  --border:#DDE4EE;--border2:#EBF0F8;
+  --text:#1A2744;--text2:#4A5568;--text3:#8899BB;
+  --green:#1F6B2B;--green-bg:#EAF3DE;--green-border:#3B6D11;
+  --yellow:#854F0B;--yellow-bg:#FAEEDA;--yellow-border:#BA7517;
+  --red:#A32D2D;--red-bg:#FCEBEB;--red-border:#CC4444;
+  --radius:12px;--radius-sm:8px;--shadow:0 2px 12px rgba(26,39,68,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text);font-size:16px}
+.app{height:100%;display:flex;flex-direction:column;overflow:hidden}
+
+.topbar{flex-shrink:0;background:var(--navy);padding:12px 16px 10px;display:flex;align-items:center;gap:10px}
+.topbar-dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);flex-shrink:0}
+.topbar-dot.purple{background:var(--purple-accent2)}
+.topbar-title{font-size:13px;font-weight:600;color:rgba(255,255,255,.9);letter-spacing:.8px;text-transform:uppercase;flex:1}
+.topbar-back{background:none;border:none;color:rgba(255,255,255,.7);font-size:22px;cursor:pointer;padding:0 4px;line-height:1;display:none;flex-shrink:0}
+.topbar-back.visible{display:block}
+
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px}
+.scroll::-webkit-scrollbar{display:none}
+.screen{display:none}.screen.active{display:block}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:12px}
+
+h1{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:6px;line-height:1.2}
+h2{font-size:19px;font-weight:600;color:var(--navy);margin-bottom:6px}
+h3{font-size:16px;font-weight:600;color:var(--navy);margin-bottom:10px}
+.sub{font-size:14px;color:var(--text2);line-height:1.55;margin-bottom:16px}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:5px}
+.field input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:15px;background:var(--card);color:var(--text);outline:none;transition:border .15s}
+.field input:focus{border-color:var(--blue)}
+.err-msg{font-size:12px;color:var(--red);margin-top:-10px;margin-bottom:10px;display:none}
+.ok-msg{font-size:12px;color:var(--green);margin-top:6px;display:none}
+
+/* GROUP SELECTOR */
+.group-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.group-card{border:2px solid var(--border);border-radius:var(--radius);padding:16px 12px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg)}
+.group-card:active{transform:scale(.97)}
+.group-card.admin{border-color:var(--blue);background:var(--accent)}
+.group-card.kc{border-color:var(--purple);background:var(--purple-accent)}
+.group-card .gc-icon{font-size:28px;margin-bottom:8px}
+.group-card .gc-title{font-size:14px;font-weight:700;margin-bottom:3px}
+.group-card .gc-sub{font-size:12px;color:var(--text3)}
+.group-card.admin .gc-title{color:var(--blue)}
+.group-card.kc .gc-title{color:var(--purple)}
+
+/* GROUP BADGE */
+.group-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:12px;font-weight:600;margin-bottom:14px;border:1.5px solid}
+.group-badge.admin{background:var(--accent);color:var(--blue);border-color:var(--accent2)}
+.group-badge.kc{background:var(--purple-accent);color:var(--purple);border-color:var(--purple-accent2)}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border-radius:var(--radius-sm);border:none;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .15s;outline:none}
+.btn:active{opacity:.8}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary.purple{background:var(--purple)}
+.btn-secondary{background:var(--accent);color:var(--navy);border:1.5px solid var(--border)}
+.btn-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.btn-sm{padding:10px 14px;font-size:14px}
+.btn-ghost{background:none;border:none;color:var(--text3);font-size:13px;padding:10px;width:auto}
+.btn-row{display:flex;gap:8px;margin-top:14px}
+.btn-row .btn{flex:1}
+
+.stage-list{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.stage-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.stage-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--blue)}
+.stage-card.kc-group::before{background:var(--purple)}
+.stage-card.locked{opacity:.45;cursor:default}
+.stage-card.locked::before{background:var(--border)}
+.stage-card.done-g::before{background:var(--green)}
+.stage-card.done-y::before{background:var(--yellow-border)}
+.stage-card.done-r::before{background:var(--red)}
+.stage-card:active:not(.locked){transform:scale(.98)}
+.sc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.sc-num{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px}
+.sc-tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px}
+.sc-title{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:2px}
+.sc-sub{font-size:13px;color:var(--text2)}
+.sc-score{font-size:14px;font-weight:700;margin-top:8px}
+.sc-attempts{font-size:12px;color:var(--text3);margin-top:2px}
+
+.scale-bar{display:grid;grid-template-columns:1fr 1fr 1fr;border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:16px}
+.scale-cell{padding:10px 8px;text-align:center;border-right:1px solid var(--border)}
+.scale-cell:last-child{border-right:none}
+.sc-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.sc-val{font-size:13px;font-weight:700}
+
+.prog-wrap{background:var(--border2);border-radius:99px;height:5px;margin-bottom:18px;overflow:hidden}
+.prog-fill{height:100%;background:var(--blue);border-radius:99px;transition:width .3s}
+.prog-fill.purple{background:var(--purple)}
+
+.q-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:12px;border-bottom:1.5px solid var(--border2)}
+.q-num{font-size:13px;color:var(--text3);font-weight:500}
+.q-mod{font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--accent);color:var(--blue);border:1px solid var(--accent2)}
+.q-mod.purple{background:var(--purple-accent);color:var(--purple);border-color:var(--purple-accent2)}
+.q-text{font-size:16px;font-weight:600;color:var(--navy);line-height:1.5;margin-bottom:16px}
+.opts{display:flex;flex-direction:column;gap:0}
+.opt{display:flex;align-items:flex-start;gap:12px;padding:13px 14px;background:var(--card);border:1.5px solid var(--border);border-top-width:0;font-size:14px;color:var(--text);text-align:left;cursor:pointer;line-height:1.4;transition:background .1s;width:100%}
+.opt:first-child{border-radius:var(--radius-sm) var(--radius-sm) 0 0;border-top-width:1.5px}
+.opt:last-child{border-radius:0 0 var(--radius-sm) var(--radius-sm)}
+.opt:active:not([disabled]){background:var(--accent)}
+.opt-ltr{font-size:12px;font-weight:700;color:var(--blue);background:var(--accent);border-radius:6px;padding:2px 7px;flex-shrink:0;margin-top:1px;border:1px solid var(--accent2);min-width:26px;text-align:center}
+.opt-ltr.purple{color:var(--purple);background:var(--purple-accent);border-color:var(--purple-accent2)}
+.opt.correct{background:var(--green-bg);border-color:var(--green-border)}
+.opt.correct .opt-ltr{background:#C0DD97;color:var(--green);border-color:var(--green-border)}
+.opt.wrong{background:var(--red-bg);border-color:var(--red-border)}
+.opt.wrong .opt-ltr{background:#F7C1C1;color:var(--red);border-color:var(--red-border)}
+.opt.dim{opacity:.3}
+.opt[disabled]{cursor:default}
+.explain{margin-top:12px;padding:12px 14px;background:var(--accent);border-radius:var(--radius-sm);font-size:13px;color:var(--text2);line-height:1.55;border-left:3px solid var(--blue)}
+.explain.purple{background:var(--purple-accent);border-left-color:var(--purple)}
+.next-btn-wrap{padding:16px 0 4px}
+
+.res-hero{text-align:center;padding:20px 0 14px}
+.res-circle{width:90px;height:90px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 12px;border:3px solid}
+.res-pct{font-size:26px;font-weight:800;line-height:1}
+.res-frac{font-size:12px;font-weight:500;opacity:.7;margin-top:2px}
+.res-time{font-size:13px;color:var(--text3);margin-bottom:10px}
+.pill{display:inline-block;padding:6px 16px;border-radius:99px;font-size:13px;font-weight:700;margin-bottom:10px;border:1.5px solid}
+.pill-g{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+.pill-y{background:var(--yellow-bg);color:var(--yellow);border-color:var(--yellow-border)}
+.pill-r{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+.res-rec{font-size:13px;color:var(--text2);line-height:1.5;text-align:center;padding:0 8px}
+.breakdown{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin:14px 0}
+.bcell{padding:10px 12px;border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);background:var(--bg)}
+.bcell:nth-child(even){border-right:none}
+.bcell:nth-last-child(-n+2){border-bottom:none}
+.bcell-lbl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+.bcell-val{font-size:16px;font-weight:700}
+
+.section-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:6px;padding-top:14px;border-top:1.5px solid var(--border2)}
+.att-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:7px}
+.att-row.current{border-color:var(--blue);background:var(--accent)}
+.att-row.current.purple{border-color:var(--purple);background:var(--purple-accent)}
+.att-n{font-size:11px;font-weight:600;color:var(--text3);min-width:22px}
+.att-pct{font-size:15px;font-weight:800;min-width:46px}
+.att-info{flex:1}
+.att-frac{font-size:12px;color:var(--text2)}
+.att-date{font-size:11px;color:var(--text3)}
+.att-cur{font-size:10px;font-weight:700;color:var(--blue)}
+
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 12px;box-shadow:var(--shadow)}
+.stat-card.danger{background:var(--red-bg);border-color:var(--red-border)}
+.stat-lbl{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.stat-val{font-size:26px;font-weight:800;color:var(--navy)}
+.stat-card.danger .stat-lbl,.stat-card.danger .stat-val{color:var(--red)}
+
+.tabs{display:flex;gap:0;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:14px}
+.tab{flex:1;padding:10px 6px;text-align:center;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border-right:1px solid var(--border);transition:all .15s}
+.tab:last-child{border-right:none}
+.tab.active{background:var(--navy);color:#fff;font-weight:600}
+
+.staff-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;box-shadow:var(--shadow)}
+.staff-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--blue);flex-shrink:0;border:1.5px solid var(--accent2)}
+.avatar.kc{background:var(--purple-accent);color:var(--purple);border-color:var(--purple-accent2)}
+.staff-name{font-size:15px;font-weight:700;color:var(--navy)}
+.staff-email{font-size:11px;color:var(--text3);margin-top:1px}
+.staff-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.staff-lbl{font-size:12px;color:var(--text3);min-width:60px}
+.bar-bg{flex:1;height:7px;background:var(--border2);border-radius:99px;overflow:hidden;border:1px solid var(--border2)}
+.bar-fill{height:100%;border-radius:99px;transition:width .4s}
+.bar-pct{font-size:12px;font-weight:700;min-width:36px;text-align:right}
+.mods-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.mod-chip{font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;border:1px solid}
+.empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px}
+
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+.upload-zone:active{border-color:var(--blue);background:var(--accent)}
+.qstat-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border2);font-size:14px}
+.qstat-row:last-child{border-bottom:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <button class="topbar-back" id="topbar-back" onclick="goBack()">‹</button>
+    <div class="topbar-dot" id="topbar-dot"></div>
+    <div class="topbar-title" id="topbar-title">АДМИН 2.0 · Резонанс-Мед</div>
+  </div>
+  <div class="scroll" id="main-scroll">
+
+    <!-- LOGIN -->
+    <div id="s-login" class="screen active">
+      <div style="padding:8px 0 20px;text-align:center">
+        <div style="font-size:40px;margin-bottom:8px">🏥</div>
+        <h1>Проверка знаний</h1>
+        <p class="sub">Программа АДМИН 2.0 · Резонанс-Мед</p>
+      </div>
+      <div class="card">
+        <div class="field"><label>Электронная почта</label><input type="email" id="in-email" placeholder="имя@rezonans-med.ru" autocomplete="email"></div>
+        <div class="field"><label>Ваше имя</label><input type="text" id="in-name" placeholder="Имя Фамилия" autocomplete="name"></div>
+        <div class="err-msg" id="login-err"></div>
+        <button class="btn btn-primary" id="login-btn" onclick="login()">Войти и начать тест</button>
+        <div style="display:flex;justify-content:center;gap:4px;margin-top:12px;flex-wrap:wrap">
+          <button class="btn-ghost" onclick="go('s-dash-login')">Дашборд управляющей</button>
+          <button class="btn-ghost" onclick="go('s-mod-login')">Модератор</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASH LOGIN -->
+    <div id="s-dash-login" class="screen">
+      <div style="padding:8px 0 20px"><h1>Дашборд</h1><p class="sub">Введите пароль для просмотра результатов команды</p></div>
+      <div class="card">
+        <div class="field"><label>Пароль управляющей</label><input type="password" id="in-dash-pass" placeholder="••••••"></div>
+        <div class="err-msg" id="dash-err">Неверный пароль</div>
+        <button class="btn btn-primary" onclick="dashLogin()">Открыть дашборд</button>
+      </div>
+    </div>
+
+    <!-- MOD LOGIN -->
+    <div id="s-mod-login" class="screen">
+      <div style="padding:8px 0 20px"><h1>Модератор</h1><p class="sub">Управление вопросами и данными</p></div>
+      <div class="card">
+        <div class="field"><label>Пароль модератора</label><input type="password" id="in-mod-pass" placeholder="••••••"></div>
+        <div class="err-msg" id="mod-err">Неверный пароль</div>
+        <button class="btn btn-primary" onclick="modLogin()">Войти</button>
+      </div>
+    </div>
+
+    <!-- STAGES -->
+    <div id="s-stages" class="screen">
+      <div style="padding:4px 0 12px">
+        <h1>Проверка знаний</h1>
+        <div id="user-group-badge"></div>
+        <p id="welcome-msg" class="sub" style="margin-bottom:12px"></p>
+        <div class="scale-bar">
+          <div class="scale-cell" style="background:var(--red-bg)"><div class="sc-lbl" style="color:var(--red)">Повторить</div><div class="sc-val" style="color:var(--red)">до 70%</div></div>
+          <div class="scale-cell" style="background:var(--yellow-bg)"><div class="sc-lbl" style="color:var(--yellow)">Хорошо</div><div class="sc-val" style="color:var(--yellow)">71–94%</div></div>
+          <div class="scale-cell" style="background:var(--green-bg)"><div class="sc-lbl" style="color:var(--green)">Отличник</div><div class="sc-val" style="color:var(--green)">95%+</div></div>
+        </div>
+      </div>
+      <div class="stage-list" id="stage-list"></div>
+      <p style="font-size:12px;color:var(--text3);text-align:center;padding-bottom:8px">Этап 1 доступен · остальные откроются по расписанию</p>
+    </div>
+
+    <!-- QUIZ -->
+    <div id="s-quiz" class="screen">
+      <div class="prog-wrap"><div class="prog-fill" id="prog"></div></div>
+      <div class="card">
+        <div class="q-meta">
+          <span class="q-num" id="q-num">1 / 24</span>
+          <span class="q-mod" id="q-mod">М1</span>
+        </div>
+        <div class="q-text" id="q-text"></div>
+        <div class="opts" id="q-opts"></div>
+        <div id="q-exp" style="display:none"></div>
+      </div>
+      <div class="next-btn-wrap" id="next-wrap" style="display:none">
+        <button class="btn btn-primary" id="next-btn" onclick="nextQ()">Следующий →</button>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div id="s-result" class="screen">
+      <div class="card">
+        <div id="res-group-badge" style="text-align:center;padding-top:4px"></div>
+        <div class="res-hero">
+          <div class="res-circle" id="res-circle"><div class="res-pct" id="res-pct"></div><div class="res-frac" id="res-frac"></div></div>
+          <div class="res-time" id="res-time"></div>
+          <div id="res-pill"></div>
+          <p class="res-rec" id="res-rec"></p>
+        </div>
+        <div class="breakdown" id="res-breakdown"></div>
+        <div class="section-title">📋 История попыток</div>
+        <div id="res-attempts"></div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="retake()">↺ Снова</button>
+          <button class="btn btn-primary" id="res-stages-btn" onclick="go('s-stages')">К этапам</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="s-dashboard" class="screen">
+      <div style="padding:4px 0 14px"><h1>Результаты команды</h1><p id="dash-sub" class="sub" style="margin-bottom:14px"></p></div>
+      <div class="stat-grid" id="dash-stats"></div>
+      <div class="tabs" id="dash-tabs">
+        <div class="tab active" onclick="setTab('all',this)">Все</div>
+        <div class="tab" onclick="setTab('problems',this)">Проблемные</div>
+        <div class="tab" onclick="setTab('excellent',this)">Отличники</div>
+      </div>
+      <div id="dash-body"></div>
+    </div>
+
+    <!-- MODERATOR -->
+    <div id="s-moderator" class="screen">
+      <div style="padding:4px 0 14px"><h1>Панель модератора</h1></div>
+      <div class="card" style="margin-bottom:12px">
+        <h3>📤 Загрузить вопросы</h3>
+        <p class="sub">Загрузите .xlsx по шаблону АДМИН 2.0. Колонка «Группа»: адм / кц / обе</p>
+        <div class="upload-zone" onclick="document.getElementById('xl-input').click()">
+          <div style="font-size:32px;margin-bottom:8px">📊</div>
+          <div style="font-size:14px;font-weight:600;color:var(--navy)">Нажмите для выбора файла</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:4px">.xlsx формат</div>
+        </div>
+        <input type="file" id="xl-input" accept=".xlsx,.xls" style="display:none" onchange="handleXL(this)">
+        <div class="err-msg" id="xl-err" style="margin-top:10px"></div>
+        <div class="ok-msg" id="xl-ok" style="margin-top:10px"></div>
+      </div>
+      <div class="card" style="margin-bottom:12px"><h3>📦 База вопросов</h3><div id="q-stats"></div></div>
+      <div class="card">
+        <h3>🗑 Управление данными</h3>
+        <div class="btn-row">
+          <button class="btn btn-danger btn-sm" onclick="clearResults()">Очистить результаты</button>
+          <button class="btn btn-danger btn-sm" onclick="clearQuestions()">Сбросить вопросы</button>
+        </div>
+        <div class="ok-msg" id="clear-ok" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+if(window.Telegram&&window.Telegram.WebApp){const tg=window.Telegram.WebApp;tg.ready();tg.expand();tg.setHeaderColor('#1A2744');tg.setBackgroundColor('#F7F9FC')}
+
+const DASH_PASS="rezonans2025",MOD_PASS="mod2025";
+const SK_R="rz_r_v1",SK_Q="rz_q_v1";
+
+const DEFAULT_Q=[
+// ════════════════════════════════════════
+// ЭТАП 1 — МОДУЛИ 1–4 · РЕЗОНАНС-МЕД
+// Одна группа: администраторы / операторы (совмещённая должность)
+// ════════════════════════════════════════
+
+// ── М1 · РОЛЬ И ЦЕННОСТИ (8 вопросов) ──
+{m:"М1",s:1,g:"adm",q:"Какова главная роль администратора в клинике Резонанс-Мед по программе АДМИН 2.0?",
+o:["Секретарь, который записывает пациентов и принимает оплату","Кассир и оператор базы данных","Менеджер первого контакта — пациент выбирает вас раньше, чем врача","Специалист по оформлению документов"],
+a:2,e:"М1: пациент приходит растерянным и часто напуганным. Он ещё не знает ни диагноза, ни специалиста. Первое, с чем он сталкивается, — это вы. По вам он решает: можно ли доверять этому центру."},
+
+{m:"М1",s:1,g:"adm",q:"Что означает сдвиг «Я справочная» → «Я первый контакт с медициной»?",
+o:["Нужно отвечать на медицинские вопросы вместо врача","Пациент судит о качестве всего центра по первым 30 секундам общения с вами — до того, как увидит врача","Нужно знать все медицинские процедуры наизусть","Администратор должен ставить предварительный диагноз"],
+a:1,e:"М1: первые 30 секунд — это всё. Пациент ещё не знает ваших врачей, не видел кабинеты. Он видит вас. Ваш тон, внимание, скорость реакции — это и есть Резонанс-Мед для него в этот момент."},
+
+{m:"М1",s:1,g:"adm",q:"Пациент подходит к стойке: «Мне сказали сделать УЗИ, но я не знаю какое». Что правильно?",
+o:["«Уточняйте у врача, который направил»","Помочь сориентироваться: предложить приём терапевта или профильного врача, который определит нужный вид УЗИ","«Запишитесь на любое УЗИ — потом разберётесь»","«Позвоните в регистратуру»"],
+a:1,e:"М1: «не знаю к кому» — это запрос на роль навигатора. Не отправлять обратно, а провести внутри центра к нужному специалисту. Это и есть ценность «всё в одном месте»."},
+
+{m:"М1",s:1,g:"adm",q:"Как звучит ценность «Всё в одном месте» для пациента Резонанс-Мед?",
+o:["«У нас 30 направлений»","«Мне не нужно ездить по пяти адресам — приём, анализы и УЗИ здесь, в один визит»","«У нас много врачей»","«Мы принимаем все виды страховки»"],
+a:1,e:"М1: пациент не думает категориями «30 направлений». Он думает: «я устал ездить по разным местам». Ценность — в экономии его времени и сил. «Анализы можно сдать прямо после приёма, УЗИ — в этот же визит»."},
+
+{m:"М1",s:1,g:"adm",q:"Как правильно объяснить пациенту что включает в себя стоимость приёма терапевта?",
+o:["«Это стандартная цена, везде так»","«Стоимость 1 900 ₽ — в неё входит осмотр и заключение. Если понадобится обследование, врач скажет заранее»","«Узнайте у врача на приёме»","«Это наша базовая цена, могут быть доплаты»"],
+a:1,e:"М1: честная цена за нужное — ценность Резонанс-Мед. Пациент платит за результат, а не за неизвестность. Назвать что входит и что останется прозрачным — это и есть реализация ценности на стойке."},
+
+{m:"М1",s:1,g:"adm",q:"Что означает ценность «Уважение к времени» в работе администратора?",
+o:["Работать быстро и не задерживать очередь","Принимать по записи, сообщать о задержках, давать конкретный ориентир по времени — не оставлять пациента в неизвестности","Не разговаривать долго с каждым пациентом","Отвечать на вопросы максимально коротко"],
+a:1,e:"М1: «уважение к времени» — не скорость, а прозрачность. Пациент может подождать, если знает сколько. «Записываю вас на 14:30 — приходите за 15 минут для оформления карты, примут по времени»."},
+
+{m:"М1",s:1,g:"adm",q:"Пациент раздражён: «Я записан на 12:00, уже 12:20». Как реагировать согласно ценностям?",
+o:["Объяснить что врачи всегда задерживаются","Признать ситуацию, коротко объяснить причину и дать конкретный ориентир по времени — без оправданий","«Врач скоро освободится»","«Ожидание — это норма в медицине»"],
+a:1,e:"М1: ценность «уважение к времени» под угрозой. Не оправдываться и не отрицать. Признать + объяснить + дать ориентир. «Понимаю. Задержка — примерно 10 минут, врач заканчивает предыдущий приём»."},
+
+{m:"М1",s:1,g:"adm",q:"Что означает сдвиг «Это моя смена» → «Это репутация всего центра»?",
+o:["Нужно отчитываться за каждое действие руководству","Один разговор у стойки или один звонок формирует отзыв, рекомендацию знакомым и решение вернуться — вы говорите от лица всей клиники","Нужно работать больше чем требует должность","Нужно следить за работой коллег"],
+a:1,e:"М1: каждый контакт — это не просто смена. Это след в памяти пациента. Плохой опыт у стойки перечёркивает хорошего врача в глазах пациента. Вы — первый и последний кто его видит."},
+
+// ── М2 · КОНФЛИКТ, НЕГАТИВ, СТРЕСС (8 вопросов) ──
+{m:"М2",s:1,g:"adm",q:"Что нужно сделать ПЕРВЫМ в методике 5 шагов при конфликте у стойки?",
+o:["Объяснить позицию клиники","Попросить подождать","Позвать старшего","Поблагодарить — что человек сказал это вам, а не ушёл с обидой"],
+a:3,e:"М2, шаг 1 — ПОБЛАГОДАРИ: «Спасибо, что сказали мне об этом». Это разрушает ожидание атаки — человек ждёт защиты, а встречает благодарность. Химия разговора меняется в первые секунды."},
+
+{m:"М2",s:1,g:"adm",q:"Что происходит с человеком физиологически в момент острого конфликта?",
+o:["Он становится более внимательным — лучше запоминает","Кортизол блокирует рациональное мышление — он физически не может обрабатывать аргументы","Он успокаивается если видит уверенного сотрудника","Он начинает соглашаться если говорить медленно"],
+a:1,e:"М2: в момент конфликта кортизол буквально блокирует префронтальную кору. Человек не притворяется, что не слышит — он реально не может обрабатывать аргументы. Сначала снизить эмоцию. Потом — факты."},
+
+{m:"М2",s:1,g:"adm",q:"Что означает шаг 2 «Присоединись» в методике 5 шагов?",
+o:["Согласиться с любым требованием пациента","Встать на сторону человека — превратить «вы против нас» в «мы вместе против проблемы»","Позвать коллегу присоединиться к разговору","Пообещать решить проблему любыми средствами"],
+a:1,e:"М2, шаг 2 — ПРИСОЕДИНИСЬ: «Вы правы, это неприятная ситуация». Снимает противостояние. Из «вы против нас» становится «мы вместе против проблемы». Это занимает 10 секунд и меняет всё."},
+
+{m:"М2",s:1,g:"adm",q:"Что нельзя говорить на шаге 3 «Прояви понимание»? Выберите фразу-разрушитель.",
+o:["«Я слышу, что вы расстроены»","«Это действительно неприятная ситуация»","«Не волнуйтесь, всё будет хорошо»","«Понимаю, что вы ждали другого»"],
+a:2,e:"М2: «не волнуйтесь, всё будет хорошо» — обесценивает боль. Человек слышит: «твои переживания неважны». Называй конкретную эмоцию без обещаний. «Слышу, что вы злитесь» — честно. «Всё будет хорошо» — пустышка."},
+
+{m:"М2",s:1,g:"adm",q:"Почему нельзя пропустить шаги 1–3 и сразу перейти к объяснению ситуации?",
+o:["Это невежливо по корпоративным стандартам","Человек ещё не успокоился — и аргументы в этот момент воспринимаются как нападение, а не объяснение","Нарушает регламент работы","Без шагов 1–3 объяснения звучат неубедительно"],
+a:1,e:"М2: шаги 1–3 занимают 60–90 секунд, но полностью меняют химию разговора. Только после них аргумент будет услышан. Пропустить их — как говорить в закрытую дверь."},
+
+{m:"М2",s:1,g:"adm",q:"Пациент выходит после приёма молча, с недовольным лицом. Что делать?",
+o:["Не беспокоить — если не жалуется, значит всё нормально","Подойти: «Как прошёл приём? Всё понятно?» Скрытый конфликт опаснее открытого","Записать в журнал инцидентов","Попросить оставить отзыв"],
+a:1,e:"М2: молча ушедший пациент — это конфликт, который уходит в интернет. Простой вопрос «как прошло?» перед выходом снижает вероятность негативного отзыва на 80%. Один вопрос — тридцать секунд."},
+
+{m:"М2",s:1,g:"adm",q:"Чем опасен скрытый конфликт (пациент ничего не сказал, но остался недоволен)?",
+o:["Он менее опасен — хотя бы не испортил настроение персоналу","Скрытый конфликт = неозвученное недовольство, которое уходит в отзывы и рекомендации «не ходите туда». Это потеря 5–10 потенциальных пациентов","Это личное дело пациента","Этого не бывает — недовольные всегда говорят"],
+a:1,e:"М2: тихо ушедший пациент — самый дорогой. Он не даст вам шанса исправить. Он просто расскажет знакомым или напишет отзыв. Профилактика: «всё хорошо?» перед уходом — это не навязчивость, это забота."},
+
+{m:"М2",s:1,g:"adm",q:"Какова «реальная цена» одного неразрешённого конфликта с пациентом многопрофильного центра?",
+o:["Только личное недовольство одного человека","Один негативный отзыв или рекомендация «не идите туда» = 5–10 потенциальных пациентов, которые не запишутся","Штраф сотруднику по итогам проверки","Небольшая репутационная потеря"],
+a:1,e:"М2: в многопрофильном центре с широкой аудиторией каждый ушедший недовольным рассказывает об этом. Один неразрешённый конфликт — это не один человек. Это его знакомые, его семья, его комментарий в чате района."},
+
+{m:"М2",s:1,g:"adm",q:"Администратор использовал шаги 1–3 но пациент всё равно злится. Что делать?",
+o:["Признать поражение и позвать руководителя","Продолжать применять методику: перейти к шагу 4 (контраргумент) — теперь он будет услышан, потому что эмоция снизилась","Дать скидку чтобы успокоить","Прекратить разговор"],
+a:1,e:"М2: шаги 1–3 снижают эмоцию — они не обещают мгновенного спокойствия. Если человек всё ещё злится — возможно нужно ещё раз пройти шаги 1–2. Контраргумент (шаг 4) работает только когда человек готов слышать."},
+
+// ── М3 · ТИПОЛОГИЯ ПАЦИЕНТОВ (8 вопросов) ──
+{m:"М3",s:1,g:"adm",q:"Пациент говорит быстро, задаёт много вопросов подряд, голос напряжён. Что делать первым?",
+o:["Ответить на все вопросы по порядку — чётко и быстро","Замедлить свой темп речи и назвать его/её по имени в первые 30 секунд","Попросить подождать и взять паузу","Объяснить, что сейчас нет времени на все вопросы"],
+a:1,e:"М3 Тревожный тип: темп речи — главный инструмент. Тревожный подстраивается под вас: замедлитесь — он замедлится. Имя в первые 30 секунд — якорь присутствия. «Я вас слышу, Наталья — давайте разберёмся по порядку»."},
+
+{m:"М3",s:1,g:"adm",q:"Пациент холодно, с паузами: «Чем вы отличаетесь от клиники напротив?» Какой это тип и как реагировать?",
+o:["Тревожный — он нуждается в поддержке. Успокоить","Деловой — нужна краткая справка о ценах","Скептик — за вопросом стоит разочарование. Не защищаться: «Ваш вопрос по делу — расскажите что уже пробовали?»","Эмоциональный — дать выговориться"],
+a:2,e:"М3 Скептик: за острым вопросом — накопленный опыт разочарований. Он защищается. Защищаться в ответ — значит подтвердить его страхи. Правильно: принять вопрос, уточнить опыт, давать факты а не лозунги."},
+
+{m:"М3",s:1,g:"adm",q:"«Петрова, 14:30. Что мне нужно сделать?» — что за тип и как отвечать?",
+o:["Тревожный — рассказать о клинике подробно чтобы успокоить","Деловой — структурированно и быстро: «Три шага: заполнить карту, пройти в кабинет 8, врач через 5 минут»","Скептик — объяснить чем отличаетесь","Эмоциональный — начать с тёплого приветствия"],
+a:1,e:"М3 Деловой: хочет план, а не разговор. «Три шага: заполнить карту (стойка справа), кабинет 8 — прямо по коридору, врач примет через 5 минут». Без светских разговоров. Это не холодность — это уважение."},
+
+{m:"М3",s:1,g:"adm",q:"Пациент начинает рассказывать подробную историю болезни у стойки, уходит в детали, голос тёплый. Что делать?",
+o:["Вежливо прервать — это не нужно на ресепшн","Дать выговориться 60–90 секунд, реагировать: «понимаю», «да» — потом плавно перейти к вопросу","Задать 5 уточняющих вопросов подряд","Сразу передать врачу"],
+a:1,e:"М3 Эмоциональный: для него отношение важнее результата. Прерванный — чувствует себя отвергнутым и уходит. Услышанный — становится лояльным пациентом. 60–90 секунд инвестиции возвращаются повторными визитами."},
+
+{m:"М3",s:1,g:"adm",q:"Почему один и тот же пациент может вести себя как разный тип в разные дни?",
+o:["Потому что люди притворяются","Потому что типология неточная и условная","Тип — это не ярлык на человеке, а его состояние прямо сейчас. Задача — считать состояние и адаптироваться","Зависит от самочувствия конкретного дня"],
+a:2,e:"М3: типология — инструмент, не приговор. Один человек может быть «деловым» когда здоров и «тревожным» когда напуган диагнозом. Читайте состояние сейчас, а не навешивайте ярлык с прошлого визита."},
+
+{m:"М3",s:1,g:"adm",q:"Что характеризует «союзника» — лояльного постоянного пациента Резонанс-Мед?",
+o:["Всегда доволен и никогда не жалуется","Доверяет центру, рекомендует знакомым, следует назначениям. Его легко потерять равнодушием","Требует скидки за лояльность","Знает всех врачей лично"],
+a:1,e:"М3 Союзник: самый ценный пациент и самый уязвимый к потере. Его не нужно убеждать — его нужно не разочаровывать. Тепло при встрече, конкретность, благодарность за доверие. Именно ему уместно: «Если порекомендуете знакомым — будем рады»."},
+
+{m:"М3",s:1,g:"adm",q:"Пациент с направлением на анализы стоит в растерянности и молчит. Какой скорее всего тип и что делать?",
+o:["Деловой — дать список анализов","Подождать пока сам спросит — не нужно навязываться","Тревожный или растерянный — подойти первым: «Я могу помочь? Что вам нужно?»","Эмоциональный — подождать пока не заплачет"],
+a:2,e:"М3: молчащий растерянный пациент — это не «я сам разберусь». Это человек в новой среде который не знает как спросить. Первый шаг — ваш. «Я могу помочь?» занимает 3 секунды и снимает барьер."},
+
+{m:"М3",s:1,g:"adm",q:"По каким трём сигналам можно определить тип пациента в первые 60 секунд?",
+o:["Возраст, пол, внешний вид","Темп речи, первый вопрос или первое действие, эмоциональный фон","Наличие направления, тип страховки, время записи","Как он поздоровался и как держит документы"],
+a:1,e:"М3: три сигнала первой минуты — темп речи (быстро/медленно), первый вопрос (цена/маршрут/«что делать?»), эмоциональный фон (тревога/холодность/тепло). Этого достаточно для первичного считывания и адаптации."},
+
+// ── М4 · ПЕРВЫЙ КОНТАКТ (8 вопросов) ──
+{m:"М4",s:1,g:"adm",q:"Исследование Принстонского университета (Willis & Todorov, 2006): за сколько времени формируется устойчивое мнение о человеке?",
+o:["За 30 секунд общения","За 7 секунд (первичное решение — за 100 миллисекунд)","За 3 минуты разговора","За первую фразу"],
+a:1,e:"М4: мозг принимает первичное решение за 100 миллисекунд. За 7 секунд это решение становится практически необратимым. Эффект ореола работает всегда — сознательно или нет. Ваша задача — формировать его намеренно."},
+
+{m:"М4",s:1,g:"adm",q:"Что такое «прайминг» применительно к первому контакту на стойке?",
+o:["Специальный скрипт приветствия для первого визита","Внутреннее состояние администратора, которое заражает пациента ещё до первого слова — через микровыражения и позу","Предварительное изучение карточки пациента","Подготовка рабочего места перед началом смены"],
+a:1,e:"М4: прайминг — ваше внутреннее состояние «заражает» пациента до первого слова. Если вы раздражены или устали — мама с ребёнком считывает это через микровыражения за доли секунды. Ритуал прайминга перед контактом — профессиональный инструмент."},
+
+{m:"М4",s:1,g:"adm",q:"Что запускает улыбка администратора у пациента на уровне нейрохимии?",
+o:["Ускорение пульса и готовность к действию","Выработку окситоцина — гормона доверия и привязанности","Снижение давления и расслабление","Повышение уровня адреналина"],
+a:1,e:"М4: зеркальные нейроны (Rizzolatti) — улыбка запускает у пациента выработку окситоцина, гормона доверия. Это не метафора — буквальная нейрохимия. Пациент с повышенным окситоцином доверяет рекомендациям врача, возвращается, рекомендует."},
+
+{m:"М4",s:1,g:"adm",q:"Исследование Mehrabian: какой процент первого впечатления создаёт язык тела (поза, мимика, движение)?",
+o:["7% — только слова важны","38% — голос и интонация","55% — тело, поза, мимика, движение","Все каналы одинаково важны"],
+a:2,e:"М4: Mehrabian — 55% тело, 38% голос, 7% слова. Что это означает практически: если вы смотрите в экран когда заходит пациент — вы уже проиграли 55% впечатления ещё до первого слова."},
+
+{m:"М4",s:1,g:"adm",q:"Что происходит когда администратор смотрит в экран в момент входа пациента?",
+o:["Ничего страшного — важно что скажут при обращении","Пациент чувствует что он — «следующий в очереди», а не человек. Блокируется механизм зеркальных нейронов — нет сигнала тепла","Это профессионально — нужно завершить задачу","Пациент понимает что администратор занят"],
+a:1,e:"М4: взгляд в экран при входе пациента — это не нейтральность. Это сигнал «ты подождёшь». Зеркальные нейроны не срабатывают без визуального контакта. Ореол холода формируется за эти секунды — до первого слова."},
+
+{m:"М4",s:1,g:"adm",q:"Что такое «якорь доверия» и что является самым мощным из них в работе с пациентами?",
+o:["Красиво оформленная зона ресепшн","Профессиональный внешний вид сотрудника","Произнести имя пациента с теплом в первые 30 секунд контакта","Предложить присесть и подождать"],
+a:2,e:"М4: имя в первые 30 секунд — мощнейший якорь. «Наталья Ивановна, я вас уже нашла» — пациент физически расслабляется. Имя = «тебя видят как человека, а не как номер». Это 3 секунды которые стоят дорого."},
+
+{m:"М4",s:1,g:"adm",q:"Что такое «ритуал прайминга» перед началом контакта и зачем он нужен?",
+o:["Прочитать имя пациента в базе перед тем как позвать","Намеренное 5–10 секундное действие — выдох, внутренняя фраза «это человек которому нужна помощь» — перед каждым контактом","Проверить чистоту рабочего места","Включить компьютер и открыть нужную программу"],
+a:1,e:"М4: ритуал прайминга — настройка инструмента перед работой. Выдох + «это человек которому нужна помощь» + лёгкая улыбка = 5–10 секунд. Это предотвращает перенос стресса предыдущего контакта на следующего пациента."},
+
+{m:"М4",s:1,g:"adm",q:"Исследование Nick Morgan (2014) — применительно к телефонному звонку: что определяет готовность звонящего слушать дальше?",
+o:["Первые 30 секунд разговора и качество объяснения","Первые 500 миллисекунд — голос в эти полсекунды важнее любого скрипта","Первый заданный вопрос","Скорость ответа на входящий вызов"],
+a:1,e:"М4: первые 500 мс — голос важнее любого скрипта. Это критично для администраторов Резонанс-Мед, которые совмещают работу у стойки и на телефоне. Уставший монотонный голос закрывает человека раньше чем вы произнесли что-то по делу."},
+];
+const STAGES=[{id:1,title:"Фундамент",sub:"Модули 1–4",open:true},{id:2,title:"Технология",sub:"Модули 5–8",open:false},{id:3,title:"Продажи и скрипты",sub:"Модули 9–12",open:false},{id:4,title:"Психология и система",sub:"Модули 13–22",open:false}];
+
+function loadDB(){try{return JSON.parse(localStorage.getItem(SK_R)||'[]')}catch(e){return[]}}
+function saveDB(d){try{localStorage.setItem(SK_R,JSON.stringify(d))}catch(e){}}
+function loadQs(){try{const d=localStorage.getItem(SK_Q);return d?JSON.parse(d):DEFAULT_Q}catch(e){return DEFAULT_Q}}
+function saveQs(q){try{localStorage.setItem(SK_Q,JSON.stringify(q))}catch(e){}}
+
+const TOPBAR_TITLES={'s-login':'АДМИН 2.0 · Резонанс-Мед','s-dash-login':'Дашборд','s-mod-login':'Модератор','s-stages':'Проверка знаний','s-quiz':'Тест','s-result':'Результат','s-dashboard':'Дашборд команды','s-moderator':'Модератор'};
+const NO_BACK=['s-login','s-stages','s-dashboard','s-moderator'];
+const IS_KC=()=>false; // single group - no KC
+
+function go(id,push=true){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('main-scroll').scrollTop=0;
+  if(push)screenStack.push(id);
+  const back=document.getElementById('topbar-back');
+  back.className='topbar-back'+(NO_BACK.includes(id)?'':' visible');
+  document.getElementById('topbar-title').textContent=TOPBAR_TITLES[id]||'АДМИН 2.0';
+  const dot=document.getElementById('topbar-dot');
+  dot.className='topbar-dot'+(IS_KC()?' purple':'');
+  if(window.Telegram&&window.Telegram.WebApp){
+    if(NO_BACK.includes(id))window.Telegram.WebApp.BackButton.hide();
+    else window.Telegram.WebApp.BackButton.show();
+  }
+}
+function goBack(){if(screenStack.length>1){screenStack.pop();go(screenStack[screenStack.length-1],false)}}
+if(window.Telegram&&window.Telegram.WebApp)window.Telegram.WebApp.BackButton.onClick(goBack);
+
+function shuf(a){let b=[...a];for(let i=b.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+function getLevel(pct){return pct>=95?2:pct>=71?1:0}
+function levelText(pct){return['Нужно повторить обучение','Хорошо — близко к цели','Отличник — всё усвоил'][getLevel(pct)]}
+function levelRec(pct){return['Ниже 70%. Повторите обучение с куратором. Проверка через 3 дня.','71–94%. Близко к отличнику — повторите слабые модули и пройдите снова.','95%+. Зафиксировано. Можно выступить наставником для коллег.'][getLevel(pct)]}
+function pillClass(pct){return['pill-r','pill-y','pill-g'][getLevel(pct)]}
+function circleColors(pct){return[['#A32D2D','#FCEBEB'],['#854F0B','#FAEEDA'],['#1F6B2B','#EAF3DE']][getLevel(pct)]}
+function modColor(pct){return getLevel(pct)===2?'#1F6B2B':getLevel(pct)===1?'#854F0B':'#A32D2D'}
+function fmtDate(ts){const d=new Date(ts);return d.toLocaleDateString('ru-RU')+' '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}
+
+function groupBadgeHtml(group){
+  return''; // single group - badge removed
+}
+
+// selectGroup removed - single group only
+
+function login(){
+  const email=document.getElementById('in-email').value.trim();
+  const name=document.getElementById('in-name').value.trim();
+  const err=document.getElementById('login-err');
+  if(!email||!email.includes('@')){err.textContent='Введите корректный email';err.style.display='block';return}
+  if(!name){err.textContent='Введите ваше имя';err.style.display='block';return}
+  err.style.display='none';
+  user={email,name,group:'adm'};
+  document.getElementById('welcome-msg').textContent='Привет, '+name.split(' ')[0]+'! Выберите этап.';
+  document.getElementById('user-group-badge').innerHTML='';
+  renderStages();screenStack=['s-login'];go('s-stages');
+}
+function logout(){user=null;screenStack=['s-login'];go('s-login',false)}
+
+function dashLogin(){
+  if(document.getElementById('in-dash-pass').value===DASH_PASS){
+    document.getElementById('in-dash-pass').value='';
+    document.getElementById('dash-err').style.display='none';
+    renderDash();go('s-dashboard');
+  }else{document.getElementById('dash-err').style.display='block'}
+}
+function modLogin(){
+  if(document.getElementById('in-mod-pass').value===MOD_PASS){
+    document.getElementById('in-mod-pass').value='';
+    document.getElementById('mod-err').style.display='none';
+    renderQStats();go('s-moderator');
+  }else{document.getElementById('mod-err').style.display='block'}
+}
+
+function getQsForUser(stageId){
+  const g=user.group;
+  return loadQs().filter(q=>q.s===stageId&&(q.g===g||q.g==='both'||q.g==='обе'));
+}
+function getAllAttempts(email,stage,group){return loadDB().filter(r=>r.email===email&&r.stage===stage&&r.group===group).sort((a,b)=>new Date(b.ts)-new Date(a.ts))}
+function getBest(email,stage,group){return getAllAttempts(email,stage,group).reduce((b,r)=>(!b||r.pct>b.pct)?r:b,null)}
+
+function renderStages(){
+  const g=document.getElementById('stage-list');g.innerHTML='';
+  const isKc=IS_KC();
+  STAGES.forEach(st=>{
+    const attempts=user?getAllAttempts(user.email,st.id,user.group):[];
+    const best=attempts.length?attempts.reduce((b,r)=>r.pct>b.pct?r:b):null;
+    const qs=getQsForUser(st.id);
+    const div=document.createElement('div');
+    let cls='stage-card'+(isKc?' kc-group':'')+(st.open?'':' locked');
+    if(best)cls+=' done-'+['r','y','g'][getLevel(best.pct)];
+    div.className=cls;
+    let scoreHtml='';
+    if(best){
+      const c=['#A32D2D','#854F0B','#1F6B2B'][getLevel(best.pct)];
+      scoreHtml=`<div class="sc-score" style="color:${c}">${best.pct}% — ${levelText(best.pct)}</div><div class="sc-attempts">Попыток: ${attempts.length} · Лучший: ${best.pct}%</div>`;
+    }else{
+      scoreHtml=`<div class="sc-attempts" style="margin-top:6px">${st.open?(qs.length?'Не пройден':'Нет вопросов'):'Скоро'}</div>`;
+    }
+    div.innerHTML=`<div class="sc-header"><span class="sc-num">Этап ${st.id}</span></div><div class="sc-title">${st.title}</div><div class="sc-sub">${st.sub} · ${qs.length} вопр.</div>${scoreHtml}`;
+    if(st.open&&qs.length)div.onclick=()=>startStage(st.id);
+    g.appendChild(div);
+  });
+}
+
+function startStage(id){
+  const qs=getQsForUser(id);
+  if(!qs.length){alert('Нет вопросов для вашей группы');return}
+  curStage=id;
+  const isKc=IS_KC();
+  document.getElementById('quiz-lbl')||0;
+  document.getElementById('prog').className='prog-fill'+(isKc?' purple':'');
+  qList=shuf(qs).map(q=>{const pairs=q.o.map((t,i)=>({t,correct:i===q.a}));return{...q,pairs:shuf(pairs)}});
+  qIdx=0;qAns=new Array(qList.length).fill(null);qStart=Date.now();
+  renderQ();go('s-quiz');
+  document.getElementById('next-btn').className='btn btn-primary'+(isKc?' purple':'');
+}
+
+function renderQ(){
+  const q=qList[qIdx];
+  const isKc=IS_KC();
+  document.getElementById('prog').style.width=Math.round(qIdx/qList.length*100)+'%';
+  document.getElementById('q-num').textContent=(qIdx+1)+' / '+qList.length;
+  const modEl=document.getElementById('q-mod');
+  modEl.textContent=q.m;modEl.className='q-mod'+(isKc?' purple':'');
+  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('q-exp').style.display='none';
+  document.getElementById('q-exp').innerHTML='';
+  document.getElementById('next-wrap').style.display='none';
+  const wrap=document.getElementById('q-opts');wrap.innerHTML='';
+  const ltrs=['А','Б','В','Г'];
+  q.pairs.forEach((p,j)=>{
+    const b=document.createElement('button');
+    b.className='opt';
+    b.innerHTML=`<span class="opt-ltr${isKc?' purple':''}">${ltrs[j]}</span><span>${p.t}</span>`;
+    b.onclick=()=>pick(j);
+    wrap.appendChild(b);
+  });
+}
+
+function pick(j){
+  if(qAns[qIdx]!==null)return;
+  qAns[qIdx]=j;
+  const q=qList[qIdx];
+  const isKc=IS_KC();
+  document.querySelectorAll('#q-opts .opt').forEach((b,i)=>{
+    b.setAttribute('disabled','');
+    if(q.pairs[i].correct)b.classList.add('correct');
+    else if(i===j)b.classList.add('wrong');
+    else b.classList.add('dim');
+  });
+  if(q.e){const ex=document.getElementById('q-exp');ex.innerHTML=`<div class="explain${isKc?' purple':''}">${q.e}</div>`;ex.style.display='block'}
+  document.getElementById('next-wrap').style.display='block';
+  if(window.Telegram&&window.Telegram.WebApp)window.Telegram.WebApp.HapticFeedback.impactOccurred(q.pairs[j].correct?'medium':'light');
+}
+
+function nextQ(){qIdx++;if(qIdx>=qList.length){finishQuiz();return}renderQ()}
+function retake(){startStage(curStage)}
+
+function finishQuiz(){
+  let score=0;const byM={},byMT={};
+  qList.forEach((q,i)=>{byMT[q.m]=(byMT[q.m]||0)+1;if(qAns[i]!==null&&q.pairs[qAns[i]].correct){score++;byM[q.m]=(byM[q.m]||0)+1}});
+  const tot=qList.length,pct=Math.round(score/tot*100),sec=Math.round((Date.now()-qStart)/1000);
+  const rec={email:user.email,name:user.name,group:user.group,stage:curStage,score,total:tot,pct,byM,byMT,sec,ts:new Date().toISOString()};
+  const db=loadDB();db.push(rec);saveDB(db);
+
+  const isKc=IS_KC();
+  document.getElementById('res-group-badge').innerHTML=groupBadgeHtml(user.group);
+  const [cText,cBg]=circleColors(pct);
+  const circ=document.getElementById('res-circle');
+  circ.style.borderColor=cText;circ.style.background=cBg;
+  document.getElementById('res-pct').style.color=cText;
+  document.getElementById('res-pct').textContent=pct+'%';
+  document.getElementById('res-frac').textContent=score+'/'+tot;
+  document.getElementById('res-time').textContent=Math.floor(sec/60)+'м '+sec%60+'с';
+  document.getElementById('res-pill').innerHTML=`<div class="pill ${pillClass(pct)}">${levelText(pct)}</div>`;
+  document.getElementById('res-rec').textContent=levelRec(pct);
+  document.getElementById('res-stages-btn').className='btn btn-primary'+(isKc?' purple':'');
+
+  const bd=document.getElementById('res-breakdown');bd.innerHTML='';
+  Object.keys(byMT).sort().forEach(m=>{
+    const g2=byM[m]||0,t=byMT[m],p=Math.round(g2/t*100);
+    bd.innerHTML+=`<div class="bcell"><div class="bcell-lbl">${m}</div><div class="bcell-val" style="color:${modColor(p)}">${g2}/${t} — ${p}%</div></div>`;
+  });
+
+  const allAttempts=getAllAttempts(user.email,curStage,user.group);
+  const attDiv=document.getElementById('res-attempts');attDiv.innerHTML='';
+  if(!allAttempts.length){attDiv.innerHTML='<p style="font-size:13px;color:var(--text3)">Первая попытка</p>';}
+  else allAttempts.slice(0,8).forEach((a,i)=>{
+    const c=modColor(a.pct);
+    const isCur=a.ts===rec.ts;
+    attDiv.innerHTML+=`<div class="att-row${isCur?' current'+(isKc?' purple':''):''}">
+      <span class="att-n">#${allAttempts.length-i}</span>
+      <span class="att-pct" style="color:${c}">${a.pct}%</span>
+      <div class="att-info"><div class="att-frac">${a.score}/${a.total} вопросов</div><div class="att-date">${fmtDate(a.ts)}</div></div>
+      ${isCur?'<span class="att-cur">сейчас</span>':''}
+    </div>`;
+  });
+
+  go('s-result');renderStages();
+  if(window.Telegram&&window.Telegram.WebApp)window.Telegram.WebApp.HapticFeedback.notificationOccurred(pct>=95?'success':pct>=71?'warning':'error');
+}
+
+function renderDash(){
+  const db=loadDB();const byE={};
+  db.forEach(r=>{
+    const key=r.email+'_'+r.group;
+    if(!byE[key])byE[key]={name:r.name,email:r.email,group:r.group,attempts:{},best:{}};
+    if(!byE[key].attempts[r.stage])byE[key].attempts[r.stage]=[];
+    byE[key].attempts[r.stage].push(r);
+    const p=byE[key].best[r.stage];
+    if(!p||r.pct>p.pct)byE[key].best[r.stage]=r;
+  });
+  const staff=Object.values(byE);
+  const done=staff.filter(s=>s.best[1]).length;
+  const probs=staff.filter(s=>s.best[1]&&s.best[1].pct<71).length;
+  const avg=done?Math.round(staff.filter(s=>s.best[1]).reduce((a,s)=>a+s.best[1].pct,0)/done):0;
+  const admCount=staff.filter(s=>s.group==='adm').length;
+  document.getElementById('dash-sub').textContent=`${staff.length} сотрудников зарегистрировано · Прошли тест: ${done}`;
+  document.getElementById('dash-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-lbl">Прошли этап 1</div><div class="stat-val">${done}</div></div>
+    <div class="stat-card"><div class="stat-lbl">Средний балл</div><div class="stat-val">${done?avg+'%':'—'}</div></div>
+    <div class="stat-card"><div class="stat-lbl">Администраторов</div><div class="stat-val">${admCount}</div></div>
+    <div class="stat-card danger"><div class="stat-lbl">Ниже 70%</div><div class="stat-val">${probs}</div></div>`;
+  renderDashTable(staff);
+}
+
+function setTab(t,el){
+  dashTabState=t;
+  document.querySelectorAll('#dash-tabs .tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');
+  const db=loadDB();const byE={};
+  db.forEach(r=>{const key=r.email+'_'+r.group;if(!byE[key])byE[key]={name:r.name,email:r.email,group:r.group,attempts:{},best:{}};const p=byE[key].best[r.stage];if(!p||r.pct>p.pct)byE[key].best[r.stage]=r;if(!byE[key].attempts[r.stage])byE[key].attempts[r.stage]=[];byE[key].attempts[r.stage].push(r)});
+  renderDashTable(Object.values(byE));
+}
+
+function renderDashTable(staff){
+  let f=[...staff];
+  if(dashTabState==='adm')f=staff.filter(s=>s.group==='adm');
+  if(dashTabState==='problems')f=staff.filter(s=>s.best[1]&&s.best[1].pct<71);
+  const body=document.getElementById('dash-body');
+  if(!f.length){body.innerHTML='<div class="empty">👥<br>Нет данных для отображения</div>';return}
+  f.sort((a,b)=>(a.best[1]?a.best[1].pct:101)-(b.best[1]?b.best[1].pct:101));
+  let html='';
+  f.forEach(s=>{
+    const r=s.best[1];
+    const isKc=false;
+    const cnt=s.attempts&&s.attempts[1]?s.attempts[1].length:0;
+    const ini=s.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const pct=r?r.pct:null;
+    const bc=pct!==null?modColor(pct):'var(--text3)';
+    const tagHtml=pct===null?'<span style="font-size:12px;color:var(--text3)">Не проходил</span>':
+      pct>=95?`<span class="sc-tag" style="background:var(--green-bg);color:var(--green)">Отличник</span>`:
+      pct>=71?`<span class="sc-tag" style="background:var(--yellow-bg);color:var(--yellow)">Хорошо</span>`:
+      `<span class="sc-tag" style="background:var(--red-bg);color:var(--red)">Нужна помощь</span>`;
+    html+=`<div class="staff-card">
+      <div class="staff-top">
+        <div class="avatar${isKc?' kc':''}">${ini}</div>
+        <div><div class="staff-name">${s.name}</div><div class="staff-email">${s.email}</div></div>
+        <div style="margin-left:auto">${tagHtml}</div>
+      </div>
+    if(r){
+      html+=`<div class="staff-row">
+        <span class="staff-lbl">Этап 1</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${bc}"></div></div>
+        <span class="bar-pct" style="color:${bc}">${pct}%</span>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:6px">Попыток: ${cnt}</div>
+      <div class="mods-row">`;
+      ['М1','М2','М3','М4'].forEach(m=>{
+        if(!r.byMT||!r.byMT[m])return;
+        const g2=r.byM[m]||0,t=r.byMT[m],p=Math.round(g2/t*100),c=modColor(p);
+        html+=`<div class="mod-chip" style="background:${c}22;color:${c};border-color:${c}55">${m}: ${g2}/${t}</div>`;
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+  body.innerHTML=html;
+}
+
+function renderQStats(){
+  const qs=loadQs();
+  const bySt={1:{adm:0,both:0},2:{adm:0,both:0},3:{adm:0,both:0},4:{adm:0,both:0}};
+  qs.forEach(q=>{if(bySt[q.s])bySt[q.s][q.g]=(bySt[q.s][q.g]||0)+1});
+  let html='';
+  [1,2,3,4].forEach(s=>{
+    const total_s=Object.values(bySt[s]).reduce((a,b)=>a+b,0);
+    html+=`<div class="qstat-row"><span style="color:var(--text2)">Этап ${s} · ${STAGES[s-1].sub}</span><span style="font-weight:700">${total_s} вопросов</span></div>`;
+  });
+  html+=`<div class="qstat-row" style="border-top:1.5px solid var(--border);margin-top:4px;padding-top:12px"><span style="font-weight:600">Всего в базе</span><span style="font-weight:700">${qs.length}</span></div>`;
+  document.getElementById('q-stats').innerHTML=html;
+}
+
+function handleXL(input){
+  const file=input.files[0];if(!file)return;
+  const err=document.getElementById('xl-err'),ok=document.getElementById('xl-ok');
+  err.style.display='none';ok.style.display='none';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=new Uint8Array(e.target.result);
+      const wb=XLSX.read(data,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      const imported=[];
+      const ansMap={'А':0,'Б':1,'В':2,'Г':3,'A':0,'B':1,'C':2,'D':3};
+      const groupMap={'адм':'adm','кц':'adm','обе':'adm','adm':'adm','kc':'adm','both':'adm','оба':'adm'}; // all map to adm
+      let skipped=0;
+      for(let i=3;i<rows.length;i++){
+        const r=rows[i];
+        const mod=String(r[1]||'').trim(),stage=parseInt(r[2])||0;
+        const grpRaw=String(r[3]||'').trim().toLowerCase();
+        const grp=groupMap[grpRaw]||'both';
+        const qtext=String(r[4]||'').trim();
+        const opts=[String(r[5]||'').trim(),String(r[6]||'').trim(),String(r[7]||'').trim(),String(r[8]||'').trim()];
+        const ans=ansMap[String(r[9]||'').trim().toUpperCase()];
+        if(!mod||!stage||!qtext||opts.some(o=>!o)||ans===undefined){skipped++;continue}
+        imported.push({m:mod,s:stage,g:grp,q:qtext,o:opts,a:ans,e:''});
+      }
+      if(!imported.length){err.textContent='Нет корректных вопросов. Проверьте формат.';err.style.display='block';return}
+      const existing=loadQs();
+      const merged=[...existing,...imported.filter(nq=>!existing.some(eq=>eq.q===nq.q))];
+      saveQs(merged);
+      ok.textContent=`Загружено ${imported.length} вопросов. Всего: ${merged.length}.`;
+      ok.style.display='block';renderQStats();input.value='';
+    }catch(ex){err.textContent='Ошибка: '+ex.message;err.style.display='block'}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function clearResults(){if(!confirm('Удалить все результаты?'))return;localStorage.removeItem(SK_R);const ok=document.getElementById('clear-ok');ok.textContent='Результаты очищены.';ok.style.display='block';setTimeout(()=>ok.style.display='none',3000)}
+function clearQuestions(){if(!confirm('Сбросить вопросы к базовым?'))return;localStorage.removeItem(SK_Q);renderQStats();const ok=document.getElementById('clear-ok');ok.textContent='Вопросы сброшены к базовым (48 вопросов).';ok.style.display='block';setTimeout(()=>ok.style.display='none',3000)}
+</script>
+</body>
+</html>
