@@ -478,7 +478,12 @@ a:1,e:"М4: ритуал прайминга — настройка инстру�
 o:["Первые 30 секунд разговора и качество объяснения","Первые 500 миллисекунд — голос в эти полсекунды важнее любого скрипта","Первый заданный вопрос","Скорость ответа на входящий вызов"],
 a:1,e:"М4: первые 500 мс — голос важнее любого скрипта. Это критично для администраторов Резонанс-Мед, которые совмещают работу у стойки и на телефоне. Уставший монотонный голос закрывает человека раньше чем вы произнесли что-то по делу."},
 ];
+
 const STAGES=[{id:1,title:"Фундамент",sub:"Модули 1–4",open:true},{id:2,title:"Технология",sub:"Модули 5–8",open:false},{id:3,title:"Продажи и скрипты",sub:"Модули 9–12",open:false},{id:4,title:"Психология и система",sub:"Модули 13–22",open:false}];
+
+
+let user=null,curStage=null,qList=[],qIdx=0,qAns=[],qStart=0,dashTabState='all';
+let screenStack=['s-login'];
 
 function loadDB(){try{return JSON.parse(localStorage.getItem(SK_R)||'[]')}catch(e){return[]}}
 function saveDB(d){try{localStorage.setItem(SK_R,JSON.stringify(d))}catch(e){}}
@@ -487,7 +492,7 @@ function saveQs(q){try{localStorage.setItem(SK_Q,JSON.stringify(q))}catch(e){}}
 
 const TOPBAR_TITLES={'s-login':'АДМИН 2.0 · Резонанс-Мед','s-dash-login':'Дашборд','s-mod-login':'Модератор','s-stages':'Проверка знаний','s-quiz':'Тест','s-result':'Результат','s-dashboard':'Дашборд команды','s-moderator':'Модератор'};
 const NO_BACK=['s-login','s-stages','s-dashboard','s-moderator'];
-const IS_KC=()=>false; // single group - no KC
+const IS_KC=()=>false;
 
 function go(id,push=true){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -516,11 +521,10 @@ function circleColors(pct){return[['#A32D2D','#FCEBEB'],['#854F0B','#FAEEDA'],['
 function modColor(pct){return getLevel(pct)===2?'#1F6B2B':getLevel(pct)===1?'#854F0B':'#A32D2D'}
 function fmtDate(ts){const d=new Date(ts);return d.toLocaleDateString('ru-RU')+' '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}
 
-function groupBadgeHtml(group){
-  return''; // single group - badge removed
+function groupBadgeHtml(group){return '';}">${isKc?'📞 Оператор КЦ':'🖥️ Администратор ресепшн'}</div>`;
 }
 
-// selectGroup removed - single group only
+
 
 function login(){
   const email=document.getElementById('in-email').value.trim();
@@ -552,8 +556,7 @@ function modLogin(){
 }
 
 function getQsForUser(stageId){
-  const g=user?user.group:'adm';
-  return loadQs().filter(q=>q.s===stageId&&(q.g===g||q.g==='both'||q.g==='обе'||q.g==='adm'));
+  return loadQs().filter(q=>q.s===stageId);
 }
 function getAllAttempts(email,stage,group){return loadDB().filter(r=>r.email===email&&r.stage===stage&&r.group===group).sort((a,b)=>new Date(b.ts)-new Date(a.ts))}
 function getBest(email,stage,group){return getAllAttempts(email,stage,group).reduce((b,r)=>(!b||r.pct>b.pct)?r:b,null)}
@@ -587,7 +590,7 @@ function startStage(id){
   if(!qs.length){alert('Нет вопросов для вашей группы');return}
   curStage=id;
   const isKc=IS_KC();
-  document.getElementById('topbar-title').textContent='ЭТАП '+id+' · '+STAGES[id-1].sub.toUpperCase();
+  document.getElementById('topbar-title').textContent='Этап '+id+' · '+STAGES[id-1].sub;
   document.getElementById('prog').className='prog-fill'+(isKc?' purple':'');
   qList=shuf(qs).map(q=>{const pairs=q.o.map((t,i)=>({t,correct:i===q.a}));return{...q,pairs:shuf(pairs)}});
   qIdx=0;qAns=new Array(qList.length).fill(null);qStart=Date.now();
@@ -695,7 +698,7 @@ function renderDash(){
   const probs=staff.filter(s=>s.best[1]&&s.best[1].pct<71).length;
   const avg=done?Math.round(staff.filter(s=>s.best[1]).reduce((a,s)=>a+s.best[1].pct,0)/done):0;
   const admCount=staff.filter(s=>s.group==='adm').length;
-  document.getElementById('dash-sub').textContent=`${staff.length} сотрудников зарегистрировано · Прошли тест: ${done}`;
+  document.getElementById('dash-sub').textContent=`${staff.length} сотрудников · Прошли тест: ${done}`;
   document.getElementById('dash-stats').innerHTML=`
     <div class="stat-card"><div class="stat-lbl">Прошли этап 1</div><div class="stat-val">${done}</div></div>
     <div class="stat-card"><div class="stat-lbl">Средний балл</div><div class="stat-val">${done?avg+'%':'—'}</div></div>
@@ -759,12 +762,12 @@ function renderDashTable(staff){
 
 function renderQStats(){
   const qs=loadQs();
-  const bySt={1:{adm:0,both:0},2:{adm:0,both:0},3:{adm:0,both:0},4:{adm:0,both:0}};
+  const bySt={1:{adm:0},2:{adm:0},3:{adm:0},4:{adm:0}};
   qs.forEach(q=>{if(bySt[q.s])bySt[q.s][q.g]=(bySt[q.s][q.g]||0)+1});
   let html='';
   [1,2,3,4].forEach(s=>{
-    const total_s=Object.values(bySt[s]).reduce((a,b)=>a+b,0);
-    html+=`<div class="qstat-row"><span style="color:var(--text2)">Этап ${s} · ${STAGES[s-1].sub}</span><span style="font-weight:700">${total_s} вопросов</span></div>`;
+    const cnt=Object.values(bySt[s]).reduce((a,b)=>a+b,0);
+    html+=`<div class="qstat-row"><span style="color:var(--text2)">Этап ${s} · ${STAGES[s-1].sub}</span><span style="font-weight:700">${cnt} вопросов</span></div>`;
   });
   html+=`<div class="qstat-row" style="border-top:1.5px solid var(--border);margin-top:4px;padding-top:12px"><span style="font-weight:600">Всего в базе</span><span style="font-weight:700">${qs.length}</span></div>`;
   document.getElementById('q-stats').innerHTML=html;
@@ -783,16 +786,14 @@ function handleXL(input){
       const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
       const imported=[];
       const ansMap={'А':0,'Б':1,'В':2,'Г':3,'A':0,'B':1,'C':2,'D':3};
-      const groupMap={'адм':'adm','кц':'adm','обе':'adm','adm':'adm','kc':'adm','both':'adm','оба':'adm'}; // all map to adm
+      const groupMap={}; // single group - ignored
       let skipped=0;
       for(let i=3;i<rows.length;i++){
         const r=rows[i];
         const mod=String(r[1]||'').trim(),stage=parseInt(r[2])||0;
-        const grpRaw=String(r[3]||'').trim().toLowerCase();
-        const grp=groupMap[grpRaw]||'both';
-        const qtext=String(r[4]||'').trim();
-        const opts=[String(r[5]||'').trim(),String(r[6]||'').trim(),String(r[7]||'').trim(),String(r[8]||'').trim()];
-        const ans=ansMap[String(r[9]||'').trim().toUpperCase()];
+        const qtext=String(r[3]||'').trim();
+        const opts=[String(r[4]||'').trim(),String(r[5]||'').trim(),String(r[6]||'').trim(),String(r[7]||'').trim()];
+        const ans=ansMap[String(r[8]||'').trim().toUpperCase()];
         if(!mod||!stage||!qtext||opts.some(o=>!o)||ans===undefined){skipped++;continue}
         imported.push({m:mod,s:stage,g:grp,q:qtext,o:opts,a:ans,e:''});
       }
@@ -808,7 +809,8 @@ function handleXL(input){
 }
 
 function clearResults(){if(!confirm('Удалить все результаты?'))return;localStorage.removeItem(SK_R);const ok=document.getElementById('clear-ok');ok.textContent='Результаты очищены.';ok.style.display='block';setTimeout(()=>ok.style.display='none',3000)}
-function clearQuestions(){if(!confirm('Сбросить вопросы к базовым?'))return;localStorage.removeItem(SK_Q);renderQStats();const ok=document.getElementById('clear-ok');ok.textContent='Вопросы сброшены к базовым (33 вопроса, М1–М4).';ok.style.display='block';setTimeout(()=>ok.style.display='none',3000)}
+function clearQuestions(){if(!confirm('Сбросить вопросы к базовым?'))return;localStorage.removeItem(SK_Q);renderQStats();const ok=document.getElementById('clear-ok');ok.textContent='Вопросы сброшены к базовым (48 вопросов).';ok.style.display='block';setTimeout(()=>ok.style.display='none',3000)}
+
 </script>
 </body>
 </html>
