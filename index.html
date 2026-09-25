@@ -552,8 +552,8 @@ function modLogin(){
 }
 
 function getQsForUser(stageId){
-  const g=user.group;
-  return loadQs().filter(q=>q.s===stageId&&(q.g===g||q.g==='both'||q.g==='обе'));
+  const g=user?user.group:'adm';
+  return loadQs().filter(q=>q.s===stageId&&(q.g===g||q.g==='both'||q.g==='обе'||q.g==='adm'));
 }
 function getAllAttempts(email,stage,group){return loadDB().filter(r=>r.email===email&&r.stage===stage&&r.group===group).sort((a,b)=>new Date(b.ts)-new Date(a.ts))}
 function getBest(email,stage,group){return getAllAttempts(email,stage,group).reduce((b,r)=>(!b||r.pct>b.pct)?r:b,null)}
@@ -587,7 +587,7 @@ function startStage(id){
   if(!qs.length){alert('Нет вопросов для вашей группы');return}
   curStage=id;
   const isKc=IS_KC();
-  document.getElementById('quiz-lbl')||0;
+  document.getElementById('topbar-title').textContent='ЭТАП '+id+' · '+STAGES[id-1].sub.toUpperCase();
   document.getElementById('prog').className='prog-fill'+(isKc?' purple':'');
   qList=shuf(qs).map(q=>{const pairs=q.o.map((t,i)=>({t,correct:i===q.a}));return{...q,pairs:shuf(pairs)}});
   qIdx=0;qAns=new Array(qList.length).fill(null);qStart=Date.now();
@@ -808,7 +808,7 @@ function handleXL(input){
 }
 
 function clearResults(){if(!confirm('Удалить все результаты?'))return;localStorage.removeItem(SK_R);const ok=document.getElementById('clear-ok');ok.textContent='Результаты очищены.';ok.style.display='block';setTimeout(()=>ok.style.display='none',3000)}
-function clearQuestions(){if(!confirm('Сбросить вопросы к базовым?'))return;localStorage.removeItem(SK_Q);renderQStats();const ok=document.getElementById('clear-ok');ok.textContent='Вопросы сброшены к базовым (48 вопросов).';ok.style.display='block';setTimeout(()=>ok.style.display='none',3000)}
+function clearQuestions(){if(!confirm('Сбросить вопросы к базовым?'))return;localStorage.removeItem(SK_Q);renderQStats();const ok=document.getElementById('clear-ok');ok.textContent='Вопросы сброшены к базовым (33 вопроса, М1–М4).';ok.style.display='block';setTimeout(()=>ok.style.display='none',3000)}
 </script>
 </body>
 </html>
